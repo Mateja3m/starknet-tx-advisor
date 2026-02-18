@@ -1,99 +1,52 @@
 # Starknet React Native Mobile Wallet Adapter PoC
 
-Minimal JavaScript-only Proof-of-Concept that demonstrates a deep-link protocol between:
-- a React Native Expo dApp (`/apps/dapp`)
-- a React Native Expo Mock Wallet (`/apps/wallet`)
-- a shared adapter package (`/packages/adapter`)
+Minimal JavaScript Proof-of-Concept za deep-link protokol između dApp aplikacije i Mock Wallet aplikacije.
 
-This PoC proves connect/sign/execute flows without a real Starknet wallet.
+## Sadržaj repozitorijuma
 
-## Architecture
+- `/apps/dapp` Expo React Native dApp
+- `/apps/wallet` Expo React Native Mock Wallet
+- `/packages/adapter` deljeni JavaScript adapter
+- `/docs` protokol i test vodič
 
-```text
-+-------------------------+             +-------------------------+
-| dApp (srn-dapp://)      |  deep link  | Mock Wallet             |
-| apps/dapp               | ----------> | apps/wallet             |
-|                         |             | (srn-wallet://)         |
-| - useWallet()           |             | - parse request         |
-| - useTransaction()      |             | - approve/reject        |
-| - AsyncStorage session  | <---------- | - callback to dApp      |
-+------------+------------+   callback  +------------+------------+
-             |                                       |
-             +----------- shared logic --------------+
-                         packages/adapter
-```
+## Pokretanje
 
-## Monorepo Layout
-
-```text
-/apps/dapp
-/apps/wallet
-/packages/adapter
-/docs
-```
-
-## How To Run
-
-Prerequisites:
+Preduslovi:
 - Node.js 18+
-- Android SDK + emulator
-- `adb` available in PATH
+- Android SDK i emulator
+- `adb` u PATH
 
-Install dependencies:
+Komande iz root foldera:
+- `npm install`
+- `npm run start:dapp`
+- `npm run start:wallet`
+- `npm run android:dapp`
+- `npm run android:wallet`
 
-```bash
-npm install
-```
+## End-to-End tok
 
-Start dApp:
+- dApp šalje zahtev wallet-u preko `srn-wallet://`
+- wallet prikazuje payload i šalje approve/reject
+- wallet vraća odgovor na `srn-dapp://callback`
+- dApp validira `state`, mapira `requestId`, i čuva sesiju
 
-```bash
-npm run start:dapp
-```
+## Šta je uključeno
 
-Start wallet (second terminal):
+- `CONNECT`, `SIGN`, `EXECUTE_TX` flow
+- `requestId`, `state`, `nonce` u svakom zahtevu
+- provera `state` na callback-u
+- base64 JSON payload kroz query parametar
+- AsyncStorage sesija na dApp strani
 
-```bash
-npm run start:wallet
-```
+## Ograničenja
 
-Build/run on Android:
+- Mock potpis, nije pravi Starknet potpis
+- Nema realne wallet integracije
+- Android-only PoC u ovoj verziji
 
-```bash
-npm run android:dapp
-npm run android:wallet
-```
+## Dokumentacija
 
-## End-to-End Test (Android)
-
-1. Open both apps on the emulator.
-2. In dApp Home, tap `Connect Wallet`.
-3. Wallet opens `Incoming Request`; tap `Approve`.
-4. dApp receives callback, validates `state`, and stores session.
-5. Repeat for `Sign` and `Send Mock Tx` flows.
-
-For manual command-based tests and deep-link payload samples see:
+- `/docs/protocol.md`
 - `/docs/testing.md`
-
-## Security Basics Included
-
-- Every request carries: `requestId`, `state`, `nonce`.
-- Wallet echoes `requestId` and `state`.
-- dApp validates `state` before accepting response.
-- Payloads are base64-encoded JSON via query param.
-
-## Known Limitations
-
-- Mock signature only: `base64(sha256(payload + secret))`.
-- No real Starknet account/session cryptography.
-- No transport encryption beyond standard app deep-link transport.
-- No background request queue/retry strategy.
-- Android-only docs and setup in this repo.
-
-## Documentation
-
-- Protocol spec: `/docs/protocol.md`
-- Testing + troubleshooting: `/docs/testing.md`
-- App setup:
-  - `/apps/dapp/README.md`
-  - `/apps/wallet/README.md`
+- `/apps/dapp/README.md`
+- `/apps/wallet/README.md`

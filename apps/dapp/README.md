@@ -1,27 +1,19 @@
-# dApp App (`/apps/dapp`)
+# dApp App
 
-React Native Expo dApp that uses `@srn/adapter` to:
-- connect to mock wallet
-- sign message
-- execute mock tx
-- persist session in AsyncStorage
+Expo React Native dApp koja koristi `@srn/adapter` za connect, sign i execute tokove.
 
-## Commands
+## Komande
 
-From repo root:
+Pokretanje iz root foldera:
+- `npm install`
+- `npm run start:dapp`
+- `npm run android:dapp`
 
-```bash
-npm install
-npm run start:dapp
-npm run android:dapp
-```
+## Deep link callback
 
-## Deep Link Callback
-
-Configured scheme:
 - `srn-dapp://callback`
 
-## Notes
+## Napomena
 
-- Android-only setup in this repository.
-- The app validates callback `state` against pending request map before accepting responses.
+- Aplikacija validira `state` pre prihvatanja wallet odgovora.
+- Sesija se čuva u AsyncStorage.

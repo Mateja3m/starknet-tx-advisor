@@ -1,30 +1,20 @@
-# Mock Wallet App (`/apps/wallet`)
+# Mock Wallet App
 
-React Native Expo wallet simulator for SRN protocol PoC.
-It receives deep-link requests, renders payload, and sends approve/reject callback to dApp.
+Expo React Native mock wallet koji prima deep-link zahteve, prikazuje payload i vraća approve/reject odgovor dApp-u.
 
-## Commands
+## Komande
 
-From repo root:
+Pokretanje iz root foldera:
+- `npm install`
+- `npm run start:wallet`
+- `npm run android:wallet`
 
-```bash
-npm install
-npm run start:wallet
-npm run android:wallet
-```
-
-## Supported Routes
+## Rute
 
 - `srn-wallet://connect?payload=...`
 - `srn-wallet://sign?payload=...`
 - `srn-wallet://execute?payload=...`
 
-## Mock Signature
+## Mock potpis
 
-On SIGN approve, signature is generated as:
-
-```text
-base64(sha256(payload + "srn-mock-secret"))
-```
-
-This is testing-only and not a Starknet signature.
+- `base64(sha256(payload + "srn-mock-secret"))`
