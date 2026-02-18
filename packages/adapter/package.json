@@ -1,0 +1,14 @@
+{
+  "name": "@srn/adapter",
+  "version": "0.1.0",
+  "main": "index.js",
+  "license": "MIT",
+  "dependencies": {
+    "base-64": "^1.0.0"
+  },
+  "peerDependencies": {
+    "@react-native-async-storage/async-storage": "*",
+    "react": "*",
+    "react-native": "*"
+  }
+}
