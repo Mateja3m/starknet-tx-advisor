@@ -67,6 +67,10 @@ function WalletAdapterProvider({ children, appName = 'SRN dApp', callbackUrl = '
         return;
       }
 
+      if (pending.type === 'CONNECT') {
+        setIsConnecting(false);
+      }
+
       const validation = validateWalletResponse({
         expectedState: pending.expectedState,
         response,
@@ -89,21 +93,20 @@ function WalletAdapterProvider({ children, appName = 'SRN dApp', callbackUrl = '
 
       if (pending.type === 'CONNECT') {
         const nextSession = {
-          walletAddress: response.data.walletAddress,
-          sessionId: response.data.sessionId,
+          walletAddress: response.data?.walletAddress,
+          sessionId: response.data?.sessionId,
           connectedAt: Date.now(),
         };
         await persistSession(nextSession);
-        setIsConnecting(false);
       }
 
       if (pending.type === 'SIGN') {
-        setLastSignature(response.data.signature);
+        setLastSignature(response.data?.signature || null);
       }
 
       if (pending.type === 'EXECUTE_TX') {
-        setTxStatus(response.data.status || 'WALLET_APPROVED');
-        setTxResult(response.data);
+        setTxStatus(response.data?.status || 'WALLET_APPROVED');
+        setTxResult(response.data || null);
         setTimeout(() => {
           setTxStatus('CONFIRMED');
         }, 1200);
@@ -155,7 +158,13 @@ function WalletAdapterProvider({ children, appName = 'SRN dApp', callbackUrl = '
     });
 
     console.log('[adapter] connect request', walletUrl);
-    await Linking.openURL(walletUrl);
+    try {
+      await Linking.openURL(walletUrl);
+    } catch (error) {
+      setIsConnecting(false);
+      setLastError('WALLET_OPEN_FAILED');
+      throw error;
+    }
   }, [appName, callbackUrl, trackPending]);
 
   const signMessage = React.useCallback(
