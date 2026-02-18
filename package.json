@@ -1,0 +1,16 @@
+{
+  "name": "starknet-mwa-poc",
+  "private": true,
+  "version": "0.1.0",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "install:all": "npm install",
+    "start:dapp": "npm --workspace apps/dapp run start",
+    "start:wallet": "npm --workspace apps/wallet run start",
+    "android:dapp": "npm --workspace apps/dapp run android",
+    "android:wallet": "npm --workspace apps/wallet run android"
+  }
+}
