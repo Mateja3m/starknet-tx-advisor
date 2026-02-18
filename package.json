@@ -4,14 +4,14 @@
   "version": "0.1.0",
   "workspaces": [
     "dapp",
-    "apps/wallet",
+    "wallet",
     "packages/*"
   ],
   "scripts": {
     "install:all": "npm install",
     "start:dapp": "npm --workspace dapp run start",
-    "start:wallet": "npm --workspace apps/wallet run start",
+    "start:wallet": "npm --workspace wallet run start",
     "android:dapp": "npm --workspace dapp run android",
-    "android:wallet": "npm --workspace apps/wallet run android"
+    "android:wallet": "npm --workspace wallet run android"
   }
 }
