@@ -4,7 +4,7 @@ Minimal JavaScript Proof-of-Concept za deep-link protokol između dApp aplikacij
 
 ## Sadržaj repozitorijuma
 
-- `/apps/dapp` Expo React Native dApp
+- `/dapp` Expo React Native dApp
 - `/apps/wallet` Expo React Native Mock Wallet
 - `/packages/adapter` deljeni JavaScript adapter
 - `/docs` protokol i test vodič
@@ -48,5 +48,5 @@ Komande iz root foldera:
 
 - `/docs/protocol.md`
 - `/docs/testing.md`
-- `/apps/dapp/README.md`
+- `/dapp/README.md`
 - `/apps/wallet/README.md`

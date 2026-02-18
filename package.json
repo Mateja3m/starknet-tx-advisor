@@ -3,14 +3,15 @@
   "private": true,
   "version": "0.1.0",
   "workspaces": [
-    "apps/*",
+    "dapp",
+    "apps/wallet",
     "packages/*"
   ],
   "scripts": {
     "install:all": "npm install",
-    "start:dapp": "npm --workspace apps/dapp run start",
+    "start:dapp": "npm --workspace dapp run start",
     "start:wallet": "npm --workspace apps/wallet run start",
-    "android:dapp": "npm --workspace apps/dapp run android",
+    "android:dapp": "npm --workspace dapp run android",
     "android:wallet": "npm --workspace apps/wallet run android"
   }
 }
