@@ -1,0 +1,30 @@
+{
+  "expo": {
+    "name": "SRN Mock Wallet",
+    "slug": "srn-wallet",
+    "scheme": "srn-wallet",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "platforms": [
+      "android"
+    ],
+    "android": {
+      "package": "com.srn.wallet",
+      "intentFilters": [
+        {
+          "action": "VIEW",
+          "autoVerify": false,
+          "data": [
+            {
+              "scheme": "srn-wallet"
+            }
+          ],
+          "category": [
+            "BROWSABLE",
+            "DEFAULT"
+          ]
+        }
+      ]
+    }
+  }
+}
