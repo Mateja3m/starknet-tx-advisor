@@ -1,0 +1,24 @@
+{
+  "expo": {
+    "name": "SMDAK Mock Wallet",
+    "slug": "smdak-wallet",
+    "scheme": "smdak-wallet",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "platforms": ["android", "ios"],
+    "android": {
+      "package": "com.smdak.wallet",
+      "intentFilters": [
+        {
+          "action": "VIEW",
+          "autoVerify": false,
+          "data": [{ "scheme": "smdak-wallet" }],
+          "category": ["BROWSABLE", "DEFAULT"]
+        }
+      ]
+    },
+    "ios": {
+      "bundleIdentifier": "com.smdak.wallet"
+    }
+  }
+}

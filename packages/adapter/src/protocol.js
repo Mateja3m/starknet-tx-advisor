@@ -1,123 +1,176 @@
 const base64 = require('base-64');
 
-const WALLET_SCHEME = 'srn-wallet://';
+const WALLET_SCHEME = 'smdak-wallet://';
+const DAPP_SCHEME = 'smdak-dapp://';
 
-function encodePayload(data) {
-  return base64.encode(JSON.stringify(data));
+function randomId(prefix) {
+  return `${prefix}-${Date.now()}-${Math.floor(Math.random() * 1e9)}`;
 }
 
-function decodePayload(payload) {
+function randomString(length) {
+  const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+  let out = '';
+  for (let i = 0; i < length; i += 1) {
+    out += chars[Math.floor(Math.random() * chars.length)];
+  }
+  return out;
+}
+
+function encodeBase64Json(value) {
+  return base64.encode(JSON.stringify(value));
+}
+
+function decodeBase64Json(value) {
+  if (!value) {
+    return null;
+  }
+
+  try {
+    return JSON.parse(base64.decode(value));
+  } catch (error) {
+    return null;
+  }
+}
+
+function parseUrl(url) {
+  try {
+    const parsed = new URL(url);
+    const route = parsed.host || parsed.pathname.replace(/^\//, '');
+    return {
+      route,
+      params: parsed.searchParams,
+    };
+  } catch (error) {
+    const [head, query = ''] = String(url).split('?');
+    const route = String(head).split('://')[1] || '';
+    return {
+      route,
+      params: new URLSearchParams(query),
+    };
+  }
+}
+
+function buildWalletUrl(route, request) {
+  const encoded = encodeBase64Json(request);
+  return `${WALLET_SCHEME}${route}?payload=${encodeURIComponent(encoded)}`;
+}
+
+function buildConnectUrl({ callbackUrl, requestId, state, nonce, payload }) {
+  return buildWalletUrl('connect', {
+    type: 'CONNECT',
+    requestId,
+    state,
+    nonce,
+    callbackUrl,
+    payload,
+    createdAt: Date.now(),
+  });
+}
+
+function buildSignUrl({ callbackUrl, requestId, state, nonce, payload }) {
+  return buildWalletUrl('sign', {
+    type: 'SIGN',
+    requestId,
+    state,
+    nonce,
+    callbackUrl,
+    payload,
+    createdAt: Date.now(),
+  });
+}
+
+function buildExecuteTxUrl({ callbackUrl, requestId, state, nonce, payload }) {
+  return buildWalletUrl('execute', {
+    type: 'EXECUTE_TX',
+    requestId,
+    state,
+    nonce,
+    callbackUrl,
+    payload,
+    createdAt: Date.now(),
+  });
+}
+
+function parseWalletRequest(url) {
+  if (!url || !url.startsWith(WALLET_SCHEME)) {
+    return null;
+  }
+
+  const { route, params } = parseUrl(url);
+  const payload = decodeBase64Json(params.get('payload'));
   if (!payload) {
     return null;
   }
-  try {
-    return JSON.parse(base64.decode(payload));
-  } catch (error) {
-    return null;
-  }
-}
-
-function randomId(prefix) {
-  return `${prefix}-${Date.now()}-${Math.floor(Math.random() * 100000)}`;
-}
-
-function parseUrlParams(url) {
-  try {
-    const parsed = new URL(url);
-    return {
-      params: parsed.searchParams,
-      path: parsed.pathname.replace(/^\//, ''),
-    };
-  } catch (error) {
-    const qIndex = url.indexOf('?');
-    const queryString = qIndex >= 0 ? url.slice(qIndex + 1) : '';
-    return {
-      params: new URLSearchParams(queryString),
-      path: '',
-    };
-  }
-}
-
-function buildWalletUrl(path, payload) {
-  const encodedPayload = encodePayload(payload);
-  return `${WALLET_SCHEME}${path}?payload=${encodeURIComponent(encodedPayload)}`;
-}
-
-function buildConnectUrl({ callbackUrl, requestId, state, nonce, appName }) {
-  return buildWalletUrl('connect', {
-    type: 'CONNECT',
-    callbackUrl,
-    requestId,
-    state,
-    nonce,
-    appName,
-    createdAt: Date.now(),
-  });
-}
-
-function buildSignMessageUrl({ callbackUrl, requestId, state, nonce, message }) {
-  return buildWalletUrl('sign', {
-    type: 'SIGN',
-    callbackUrl,
-    requestId,
-    state,
-    nonce,
-    message,
-    createdAt: Date.now(),
-  });
-}
-
-function buildExecuteTxUrl({ callbackUrl, requestId, state, nonce, tx }) {
-  return buildWalletUrl('execute', {
-    type: 'EXECUTE_TX',
-    callbackUrl,
-    requestId,
-    state,
-    nonce,
-    tx,
-    createdAt: Date.now(),
-  });
-}
-
-function parseWalletResponse(url) {
-  const { params } = parseUrlParams(url);
-  const encodedPayload = params.get('payload');
-  const payload = decodePayload(encodedPayload);
-
-  if (payload) {
-    return payload;
-  }
 
   return {
-    requestId: params.get('requestId'),
-    state: params.get('state'),
-    nonce: params.get('nonce'),
-    type: params.get('type'),
-    status: params.get('status'),
-    errorCode: params.get('errorCode'),
-    errorMessage: params.get('errorMessage'),
+    route,
+    request: payload,
+    rawUrl: url,
   };
 }
 
-function validateWalletResponse({ expectedState, response }) {
-  if (!response || !response.requestId) {
+function buildWalletResponse({ request, status, result, errorCode, errorMessage }) {
+  return {
+    requestId: request.requestId,
+    state: request.state,
+    nonce: request.nonce,
+    type: request.type,
+    status,
+    result: result || null,
+    errorCode: errorCode || null,
+    errorMessage: errorMessage || null,
+    respondedAt: Date.now(),
+  };
+}
+
+function buildCallbackUrl({ callbackUrl, response }) {
+  const encoded = encodeBase64Json(response);
+  const separator = callbackUrl.includes('?') ? '&' : '?';
+  return `${callbackUrl}${separator}payload=${encodeURIComponent(encoded)}`;
+}
+
+function parseWalletResponse(url) {
+  if (!url || !url.startsWith(DAPP_SCHEME)) {
+    return null;
+  }
+
+  const { params } = parseUrl(url);
+  return decodeBase64Json(params.get('payload'));
+}
+
+function validateWalletResponse({ pending, response }) {
+  if (!response || !response.requestId || !response.state || !response.nonce) {
     return { ok: false, reason: 'MALFORMED_RESPONSE' };
   }
 
-  if (!response.state || response.state !== expectedState) {
+  if (!pending) {
+    return { ok: false, reason: 'UNKNOWN_REQUEST' };
+  }
+
+  if (pending.state !== response.state) {
     return { ok: false, reason: 'STATE_MISMATCH' };
+  }
+
+  if (pending.nonce !== response.nonce) {
+    return { ok: false, reason: 'NONCE_MISMATCH' };
   }
 
   return { ok: true };
 }
 
 module.exports = {
+  WALLET_SCHEME,
+  DAPP_SCHEME,
   randomId,
-  encodePayload,
-  decodePayload,
+  randomString,
+  encodeBase64Json,
+  decodeBase64Json,
   buildConnectUrl,
-  buildSignMessageUrl,
+  buildSignUrl,
   buildExecuteTxUrl,
+  parseWalletRequest,
+  buildWalletResponse,
+  buildCallbackUrl,
   parseWalletResponse,
   validateWalletResponse,
 };
