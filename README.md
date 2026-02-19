@@ -1,52 +1,91 @@
-# Starknet React Native Mobile Wallet Adapter PoC
+# Starknet Mobile Developer Accelerator Kit (SMDAK)
 
-Minimal JavaScript Proof-of-Concept za deep-link protokol između dApp aplikacije i Mock Wallet aplikacije.
+SMDAK is a JavaScript-first React Native + Expo PoC that accelerates mobile Starknet onboarding by providing:
+- a mobile wallet adapter protocol over deep links
+- standardized React Native hooks for wallet and transaction flows
+- a starter dApp template with two high-visibility demos (mock swap and mock mint)
 
-## Sadržaj repozitorijuma
+This repository is intended for grant validation. Real wallet/protocol integrations are future milestones.
 
-- `/dapp` Expo React Native dApp
-- `/wallet` Expo React Native Mock Wallet
-- `/packages/adapter` deljeni JavaScript adapter
-- `/docs` protokol i test vodič
+## What Problem It Solves
 
-## Pokretanje
+Mobile developers typically need to build wallet connectivity, request handling, and transaction UX from scratch.
+SMDAK provides a working baseline that demonstrates end-to-end request/response lifecycle and app UX patterns.
 
-Preduslovi:
+## What’s Included
+
+- `/apps/dapp`: Starter dApp Template (Expo RN)
+- `/apps/wallet`: Mock Wallet (Expo RN)
+- `/packages/adapter`: protocol builders/parsers/validation (pure JS)
+- `/packages/hooks`: React hooks + state management + persistence (pure JS)
+- `/docs`: protocol, testing, and grant milestones
+
+## Architecture (high level)
+
+- dApp uses `@smdak/hooks` (`useWallet`, `useTransaction`) for connect and tx lifecycle.
+- hooks package uses `@smdak/adapter` to construct deep links and validate callbacks.
+- wallet app receives `smdak-wallet://...` requests, approves/rejects, and returns to `smdak-dapp://callback`.
+- dApp validates `requestId`, `state`, and `nonce`, then updates UI and stores data.
+
+## Quickstart
+
+Prerequisites:
 - Node.js 18+
-- Android SDK i emulator
-- `adb` u PATH
+- Android SDK + emulator
+- Xcode + iOS simulator (for iOS)
 
-Komande iz root foldera:
-- `npm install`
-- `npm run start:dapp`
-- `npm run start:wallet`
-- `npm run android:dapp`
-- `npm run android:wallet`
+Install:
 
-## End-to-End tok
+```bash
+npm install
+```
 
-- dApp šalje zahtev wallet-u preko `srn-wallet://`
-- wallet prikazuje payload i šalje approve/reject
-- wallet vraća odgovor na `srn-dapp://callback`
-- dApp validira `state`, mapira `requestId`, i čuva sesiju
+Run apps in separate terminals:
 
-## Šta je uključeno
+```bash
+npm run start:dapp
+npm run start:wallet
+```
 
-- `CONNECT`, `SIGN`, `EXECUTE_TX` flow
-- `requestId`, `state`, `nonce` u svakom zahtevu
-- provera `state` na callback-u
-- base64 JSON payload kroz query parametar
-- AsyncStorage sesija na dApp strani
+Build/run:
 
-## Ograničenja
+```bash
+npm run android:dapp
+npm run android:wallet
+npm run ios:dapp
+npm run ios:wallet
+```
 
-- Mock potpis, nije pravi Starknet potpis
-- Nema realne wallet integracije
-- Android-only PoC u ovoj verziji
+## End-to-End Test Steps
 
-## Dokumentacija
+1. Open both apps (dApp + wallet).
+2. In dApp Home, tap `Connect`.
+3. Wallet opens incoming request; tap `Approve`.
+4. Confirm dApp session is populated (`walletAddress`, `sessionId`, `connectedAt`).
+5. In dApp DeFi tab: `Get Quote` then `Execute Swap`; approve in wallet.
+6. In dApp NFT tab: `Mint NFT`; approve in wallet.
+7. Check Logs tab for request/response events and confirmed transaction history.
 
-- `/docs/protocol.md`
+Detailed testing matrix and deep-link commands:
 - `/docs/testing.md`
-- `/dapp/README.md`
-- `/wallet/README.md`
+
+## Screenshots (placeholders)
+
+- `docs/screenshots/dapp-home.png`
+- `docs/screenshots/dapp-defi.png`
+- `docs/screenshots/dapp-nft.png`
+- `docs/screenshots/wallet-request.png`
+
+## Known Limitations
+
+- Mock wallet only (no real Starknet account integration)
+- Mock signature and mock tx hash only
+- No real on-chain confirmation polling
+- No production-grade cryptographic session model
+
+## Next Steps
+
+- Integrate real Starknet wallet/account providers
+- Replace mock tx flow with actual Starknet transaction submission and receipt polling
+- Support multiple wallets and wallet discovery
+- Harden protocol signing/encryption and replay protections

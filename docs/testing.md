@@ -1,95 +1,140 @@
-# Testing Guide (Android)
+# SMDAK Testing Guide
 
-## 1) Setup
+## 1) Environment Setup
 
-From repo root:
+Prerequisites:
+- Node.js 18+
+- Android Studio + emulator
+- Xcode + iOS simulator
+- `adb` and `xcrun` available in PATH
+
+Install dependencies:
 
 ```bash
 npm install
 ```
 
-Start each app in separate terminals:
+Run Metro for each app (separate terminals):
 
 ```bash
 npm run start:dapp
 npm run start:wallet
 ```
 
-Build/install native apps on emulator:
+Build and run apps:
 
 ```bash
 npm run android:dapp
 npm run android:wallet
+npm run ios:dapp
+npm run ios:wallet
 ```
 
-## 2) Deep Link Sanity Checks
+## 2) Deep Link Command Tests
 
-Open wallet directly:
+### Android
+
+Wallet open test:
 
 ```bash
-adb shell am start -a android.intent.action.VIEW -d "srn-wallet://connect?payload=eyJ0eXBlIjoiQ09OTkVDVCIsImNhbGxiYWNrVXJsIjoic3JuLWRhcHA6Ly9jYWxsYmFjayIsInJlcXVlc3RJZCI6InRlc3QtMSIsInN0YXRlIjoic3RhdGUtMSIsIm5vbmNlIjoibm9uY2UtMSIsImFwcE5hbWUiOiJDbGlDb21tYW5kIn0%3D"
+adb shell am start -a android.intent.action.VIEW -d "smdak-wallet://connect?payload=eyJ0eXBlIjoiQ09OTkVDVCIsInJlcXVlc3RJZCI6InQxIiwic3RhdGUiOiJzMSIsIm5vbmNlIjoibjEiLCJjYWxsYmFja1VybCI6InNtZGFrLWRhcHA6Ly9jYWxsYmFjayIsInBheWxvYWQiOnsiYXBwTmFtZSI6IkNMSSJ9fQ%3D%3D"
 ```
 
-Open dApp callback directly:
+dApp callback test:
 
 ```bash
-adb shell am start -a android.intent.action.VIEW -d "srn-dapp://callback?payload=eyJyZXF1ZXN0SWQiOiJ0ZXN0LTEiLCJzdGF0ZSI6InN0YXRlLTEiLCJub25jZSI6Im5vbmNlLTEiLCJ0eXBlIjoiQ09OTkVDVCIsInN0YXR1cyI6IkFQUFJPVkVEIiwiZGF0YSI6eyJ3YWxsZXRBZGRyZXNzIjoiMHhNT0NLMTIzIiwic2Vzc2lvbklkIjoiczEyMyJ9fQ%3D%3D"
+adb shell am start -a android.intent.action.VIEW -d "smdak-dapp://callback?payload=eyJyZXF1ZXN0SWQiOiJ0MSIsInN0YXRlIjoiczEiLCJub25jZSI6Im4xIiwidHlwZSI6IkNPTk5FQ1QiLCJzdGF0dXMiOiJBUFBST1ZFRCIsInJlc3VsdCI6eyJ3YWxsZXRBZGRyZXNzIjoiMHhNT0NLIiwic2Vzc2lvbklkIjoicy0xIiwiY2hhaW4iOiJzdGFya25ldCJ9fQ%3D%3D"
 ```
 
-## 3) Flow Tests
+### iOS
 
-### CONNECT (2 tests)
+Wallet open test:
 
-1. Positive connect
-- In dApp Home tap `Connect Wallet`.
-- In wallet tap `Approve`.
-- Expected: dApp state becomes `CONNECTED`, session has `walletAddress` and `connectedAt`.
+```bash
+xcrun simctl openurl booted "smdak-wallet://connect?payload=eyJ0eXBlIjoiQ09OTkVDVCIsInJlcXVlc3RJZCI6InQxIiwic3RhdGUiOiJzMSIsIm5vbmNlIjoibjEiLCJjYWxsYmFja1VybCI6InNtZGFrLWRhcHA6Ly9jYWxsYmFjayIsInBheWxvYWQiOnsiYXBwTmFtZSI6IkNMSSJ9fQ%3D%3D"
+```
 
-2. Reject connect
-- Tap `Connect Wallet`.
-- In wallet tap `Reject`.
-- Expected: dApp remains disconnected, `Last Error` shows rejection.
+dApp callback test:
 
-### SIGN MESSAGE (2 tests)
+```bash
+xcrun simctl openurl booted "smdak-dapp://callback?payload=eyJyZXF1ZXN0SWQiOiJ0MSIsInN0YXRlIjoiczEiLCJub25jZSI6Im4xIiwidHlwZSI6IkNPTk5FQ1QiLCJzdGF0dXMiOiJBUFBST1ZFRCIsInJlc3VsdCI6eyJ3YWxsZXRBZGRyZXNzIjoiMHhNT0NLIiwic2Vzc2lvbklkIjoicy0xIiwiY2hhaW4iOiJzdGFya25ldCJ9fQ%3D%3D"
+```
 
-1. Positive sign
-- Go to `Sign` tab, input `hello starknet`, tap `Sign`.
-- Approve in wallet.
-- Expected: signature displayed in dApp.
+## 3) Manual Test Cases
 
-2. Reject sign
-- Repeat sign request, but tap `Reject` in wallet.
-- Expected: no signature update, `Last Error` is set.
+### Connect flow
 
-### EXECUTE TX (2 tests)
+Case 1: approve connect
+1. Open dApp Home
+2. Tap `Connect`
+3. In wallet, tap `Approve`
+4. Expected: dApp status `CONNECTED`, session fields populated
 
-1. Positive tx
-- Go to `Tx` tab and tap `Send Mock Tx`.
-- Approve in wallet.
-- Expected status progression: `CREATED -> REQUESTED -> WALLET_APPROVED -> CONFIRMED`.
+Case 2: reject connect
+1. Tap `Connect`
+2. In wallet, tap `Reject`
+3. Expected: no session, error shown/logged
 
-2. Reject tx
-- Send mock tx and reject in wallet.
-- Expected: dApp status becomes `REJECTED` and shows error.
+### Mock swap flow (DeFi)
+
+Case 1: successful swap
+1. Open DeFi tab
+2. Enter tokens/amount and tap `Get Quote`
+3. Tap `Execute Swap` and approve in wallet
+4. Expected status: `CREATED -> REQUESTED -> WALLET_APPROVED -> CONFIRMED`
+
+Case 2: rejected swap
+1. Repeat swap request
+2. Tap `Reject` in wallet
+3. Expected: tx status `REJECTED`, log entry created
+
+### Mock mint flow (NFT)
+
+Case 1: successful mint
+1. Open NFT tab
+2. Enter collection and receiver
+3. Tap `Mint NFT` and approve in wallet
+4. Expected status progression to `CONFIRMED`
+
+Case 2: rejected mint
+1. Submit mint request
+2. Reject in wallet
+3. Expected: tx status `REJECTED` with log entry
+
+### Reject flow (general)
+
+Case 1: reject connect
+- Confirm `USER_REJECTED` appears in logs/error state
+
+Case 2: reject execute_tx
+- Confirm tx state transitions to `REJECTED`
+
+### Invalid state flow
+
+Case 1: tampered callback state
+1. Start a real request from dApp
+2. Before approving, manually send callback with wrong `state`
+3. Expected: dApp rejects callback with `STATE_MISMATCH`
+
+Case 2: tampered nonce
+1. Send callback with incorrect `nonce`
+2. Expected: dApp rejects callback with `NONCE_MISMATCH`
 
 ## 4) Troubleshooting
 
-- App does not open from deep link:
-  - Check app scheme in `app.json` (`srn-dapp`, `srn-wallet`).
-  - Rebuild Android app after scheme changes: `npm run android:dapp` / `npm run android:wallet`.
+- Deep link does not open app:
+  - verify scheme in `app.json`
+  - reinstall/rebuild app after scheme changes
 
-- Callback not handled in dApp:
-  - Check wallet request includes valid `callbackUrl`.
-  - Check dApp logs for `STATE_MISMATCH` or `UNKNOWN_REQUEST`.
+- Callback ignored:
+  - confirm callback route starts with `smdak-dapp://callback`
+  - check Logs tab for validation errors
 
-- Wallet shows empty payload:
-  - Confirm request uses `payload=` query param with base64 JSON.
+- No session persistence:
+  - verify `@react-native-async-storage/async-storage` installation
 
-- AsyncStorage session not persisted:
-  - Confirm `@react-native-async-storage/async-storage` installed in dApp workspace.
-
-## 5) Useful Log Filters
+- Track runtime logs:
 
 ```bash
-adb logcat | grep -E "adapter|wallet"
+adb logcat | grep -E "smdak-hooks|smdak-wallet"
 ```
