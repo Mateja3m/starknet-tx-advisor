@@ -1,91 +1,61 @@
-# Starknet Mobile Developer Accelerator Kit (SMDAK)
+# starknet-tx-advisor
 
-SMDAK is a JavaScript-first React Native + Expo PoC that accelerates mobile Starknet onboarding by providing:
-- a mobile wallet adapter protocol over deep links
-- standardized React Native hooks for wallet and transaction flows
-- a starter dApp template with two high-visibility demos (mock swap and mock mint)
+Ultra-lean PoC for Starknet transaction lifecycle and fee-escalation advice based on `tx_hash` analysis only.
 
-This repository is intended for grant validation. Real wallet/protocol integrations are future milestones.
+## Prerequisites
 
-## What Problem It Solves
-
-Mobile developers typically need to build wallet connectivity, request handling, and transaction UX from scratch.
-SMDAK provides a working baseline that demonstrates end-to-end request/response lifecycle and app UX patterns.
-
-## What’s Included
-
-- `/apps/dapp`: Starter dApp Template (Expo RN)
-- `/apps/wallet`: Mock Wallet (Expo RN)
-- `/packages/adapter`: protocol builders/parsers/validation (pure JS)
-- `/packages/hooks`: React hooks + state management + persistence (pure JS)
-- `/docs`: protocol, testing, and grant milestones
-
-## Architecture (high level)
-
-- dApp uses `@smdak/hooks` (`useWallet`, `useTransaction`) for connect and tx lifecycle.
-- hooks package uses `@smdak/adapter` to construct deep links and validate callbacks.
-- wallet app receives `smdak-wallet://...` requests, approves/rejects, and returns to `smdak-dapp://callback`.
-- dApp validates `requestId`, `state`, and `nonce`, then updates UI and stores data.
-
-## Quickstart
-
-Prerequisites:
 - Node.js 18+
-- Android SDK + emulator
-- Xcode + iOS simulator (for iOS)
+- npm 9+
 
-Install:
+## Environment setup
+
+1. Copy root env file:
+
+```bash
+cp .env.example .env
+```
+
+2. Set at least one RPC URL:
+- Prefer `STARKNET_RPC_URL` (Infura URL or any Starknet RPC endpoint)
+- Optional fallbacks: `STARKNET_RPC_URL_FALLBACK_1`, `STARKNET_RPC_URL_FALLBACK_2`
+
+If `STARKNET_RPC_URL` is empty and `INFURA_API_KEY` is set, collector attempts to build Infura URL automatically.
+
+## Install
 
 ```bash
 npm install
 ```
 
-Run apps in separate terminals:
+## Run (both services)
 
 ```bash
-npm run start:dapp
-npm run start:wallet
+npm run dev
 ```
 
-Build/run:
+Or separately:
 
 ```bash
-npm run android:dapp
-npm run android:wallet
-npm run ios:dapp
-npm run ios:wallet
+npm run dev:collector
+npm run dev:web
 ```
 
-## End-to-End Test Steps
+## Analyze a tx hash
 
-1. Open both apps (dApp + wallet).
-2. In dApp Home, tap `Connect`.
-3. Wallet opens incoming request; tap `Approve`.
-4. Confirm dApp session is populated (`walletAddress`, `sessionId`, `connectedAt`).
-5. In dApp DeFi tab: `Get Quote` then `Execute Swap`; approve in wallet.
-6. In dApp NFT tab: `Mint NFT`; approve in wallet.
-7. Check Logs tab for request/response events and confirmed transaction history.
+1. Open web app at `http://localhost:3000`
+2. Enter tx hash (`0x...`)
+3. Click **Analyze**
+4. UI shows:
+- current status badge
+- lifecycle timeline
+- status explanation + actions
+- fee bump recommendation
+- raw JSON toggle
+- export report JSON button
 
-Detailed testing matrix and deep-link commands:
-- `/docs/testing.md`
+## Known limitations
 
-## Screenshots (placeholders)
-
-- `docs/screenshots/dapp-home.png`
-- `docs/screenshots/dapp-defi.png`
-- `docs/screenshots/dapp-nft.png`
-- `docs/screenshots/wallet-request.png`
-
-## Known Limitations
-
-- Mock wallet only (no real Starknet account integration)
-- Mock signature and mock tx hash only
-- No real on-chain confirmation polling
-- No production-grade cryptographic session model
-
-## Next Steps
-
-- Integrate real Starknet wallet/account providers
-- Replace mock tx flow with actual Starknet transaction submission and receipt polling
-- Support multiple wallets and wallet discovery
-- Harden protocol signing/encryption and replay protections
+- Scope is intentionally limited to per-`tx_hash` analysis.
+- No global mempool visibility.
+- No auth/accounts/wallet integration.
+- Nonce conflict logic is best-effort and may be partial when account context is missing.

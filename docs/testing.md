@@ -1,140 +1,76 @@
-# SMDAK Testing Guide
+# Testing
 
-## 1) Environment Setup
+## 1) Configure RPC provider
 
-Prerequisites:
-- Node.js 18+
-- Android Studio + emulator
-- Xcode + iOS simulator
-- `adb` and `xcrun` available in PATH
+Create `.env` from root example:
 
-Install dependencies:
+```bash
+cp .env.example .env
+```
+
+You need at least one working Starknet RPC URL.
+
+### Option A: Infura (popular)
+1. Create project key in Infura dashboard.
+2. Set either:
+   - `INFURA_API_KEY=<your_key>` and leave `STARKNET_RPC_URL=` empty, OR
+   - set explicit `STARKNET_RPC_URL=https://starknet-sepolia.infura.io/v3/<your_key>`
+
+### Option B: Alchemy (popular)
+Set:
+
+```env
+STARKNET_RPC_URL=https://starknet-sepolia.g.alchemy.com/starknet/version/rpc/v0_7/<your_api_key>
+```
+
+### Option C: Blast
+Set:
+
+```env
+STARKNET_RPC_URL=https://starknet-sepolia.public.blastapi.io/rpc/v0_7
+```
+
+If a public endpoint becomes unstable, keep it empty and use key-based provider.
+
+## 2) Optional fallbacks
+
+```env
+STARKNET_RPC_URL_FALLBACK_1=<second_provider_url>
+STARKNET_RPC_URL_FALLBACK_2=<third_provider_url>
+```
+
+Collector tries primary, retries once, then fallback 1 and fallback 2.
+
+## 3) Run locally
 
 ```bash
 npm install
+npm run dev:collector
+npm run dev:web
 ```
 
-Run Metro for each app (separate terminals):
+Open `http://localhost:3000`.
+
+## 4) Manual check
+
+1. Paste `0x...` tx hash.
+2. Click Analyze.
+3. Confirm status badge, timeline, recommendation, raw JSON toggle, and export button.
+4. Check collector health and RPC info:
 
 ```bash
-npm run start:dapp
-npm run start:wallet
+curl http://localhost:4000/health
+curl http://localhost:4000/rpc/info
 ```
 
-Build and run apps:
+## 5) Unit tests
 
 ```bash
-npm run android:dapp
-npm run android:wallet
-npm run ios:dapp
-npm run ios:wallet
+npm test
 ```
 
-## 2) Deep Link Command Tests
-
-### Android
-
-Wallet open test:
-
-```bash
-adb shell am start -a android.intent.action.VIEW -d "smdak-wallet://connect?payload=eyJ0eXBlIjoiQ09OTkVDVCIsInJlcXVlc3RJZCI6InQxIiwic3RhdGUiOiJzMSIsIm5vbmNlIjoibjEiLCJjYWxsYmFja1VybCI6InNtZGFrLWRhcHA6Ly9jYWxsYmFjayIsInBheWxvYWQiOnsiYXBwTmFtZSI6IkNMSSJ9fQ%3D%3D"
-```
-
-dApp callback test:
-
-```bash
-adb shell am start -a android.intent.action.VIEW -d "smdak-dapp://callback?payload=eyJyZXF1ZXN0SWQiOiJ0MSIsInN0YXRlIjoiczEiLCJub25jZSI6Im4xIiwidHlwZSI6IkNPTk5FQ1QiLCJzdGF0dXMiOiJBUFBST1ZFRCIsInJlc3VsdCI6eyJ3YWxsZXRBZGRyZXNzIjoiMHhNT0NLIiwic2Vzc2lvbklkIjoicy0xIiwiY2hhaW4iOiJzdGFya25ldCJ9fQ%3D%3D"
-```
-
-### iOS
-
-Wallet open test:
-
-```bash
-xcrun simctl openurl booted "smdak-wallet://connect?payload=eyJ0eXBlIjoiQ09OTkVDVCIsInJlcXVlc3RJZCI6InQxIiwic3RhdGUiOiJzMSIsIm5vbmNlIjoibjEiLCJjYWxsYmFja1VybCI6InNtZGFrLWRhcHA6Ly9jYWxsYmFjayIsInBheWxvYWQiOnsiYXBwTmFtZSI6IkNMSSJ9fQ%3D%3D"
-```
-
-dApp callback test:
-
-```bash
-xcrun simctl openurl booted "smdak-dapp://callback?payload=eyJyZXF1ZXN0SWQiOiJ0MSIsInN0YXRlIjoiczEiLCJub25jZSI6Im4xIiwidHlwZSI6IkNPTk5FQ1QiLCJzdGF0dXMiOiJBUFBST1ZFRCIsInJlc3VsdCI6eyJ3YWxsZXRBZGRyZXNzIjoiMHhNT0NLIiwic2Vzc2lvbklkIjoicy0xIiwiY2hhaW4iOiJzdGFya25ldCJ9fQ%3D%3D"
-```
-
-## 3) Manual Test Cases
-
-### Connect flow
-
-Case 1: approve connect
-1. Open dApp Home
-2. Tap `Connect`
-3. In wallet, tap `Approve`
-4. Expected: dApp status `CONNECTED`, session fields populated
-
-Case 2: reject connect
-1. Tap `Connect`
-2. In wallet, tap `Reject`
-3. Expected: no session, error shown/logged
-
-### Mock swap flow (DeFi)
-
-Case 1: successful swap
-1. Open DeFi tab
-2. Enter tokens/amount and tap `Get Quote`
-3. Tap `Execute Swap` and approve in wallet
-4. Expected status: `CREATED -> REQUESTED -> WALLET_APPROVED -> CONFIRMED`
-
-Case 2: rejected swap
-1. Repeat swap request
-2. Tap `Reject` in wallet
-3. Expected: tx status `REJECTED`, log entry created
-
-### Mock mint flow (NFT)
-
-Case 1: successful mint
-1. Open NFT tab
-2. Enter collection and receiver
-3. Tap `Mint NFT` and approve in wallet
-4. Expected status progression to `CONFIRMED`
-
-Case 2: rejected mint
-1. Submit mint request
-2. Reject in wallet
-3. Expected: tx status `REJECTED` with log entry
-
-### Reject flow (general)
-
-Case 1: reject connect
-- Confirm `USER_REJECTED` appears in logs/error state
-
-Case 2: reject execute_tx
-- Confirm tx state transitions to `REJECTED`
-
-### Invalid state flow
-
-Case 1: tampered callback state
-1. Start a real request from dApp
-2. Before approving, manually send callback with wrong `state`
-3. Expected: dApp rejects callback with `STATE_MISMATCH`
-
-Case 2: tampered nonce
-1. Send callback with incorrect `nonce`
-2. Expected: dApp rejects callback with `NONCE_MISMATCH`
-
-## 4) Troubleshooting
-
-- Deep link does not open app:
-  - verify scheme in `app.json`
-  - reinstall/rebuild app after scheme changes
-
-- Callback ignored:
-  - confirm callback route starts with `smdak-dapp://callback`
-  - check Logs tab for validation errors
-
-- No session persistence:
-  - verify `@react-native-async-storage/async-storage` installation
-
-- Track runtime logs:
-
-```bash
-adb logcat | grep -E "smdak-hooks|smdak-wallet"
-```
+Covers:
+- status normalization
+- timeline ordering + dedupe
+- fee bump rounding (+12%)
+- nonce conflict rules
