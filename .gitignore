@@ -1,9 +1,13 @@
 node_modules
-.expo
-.expo-shared
-npm-debug.log*
-.DS_Store
-*.log
+.next
 dist
-apps/*/android
-apps/*/ios
+coverage
+.env
+.env.local
+*.log
+.DS_Store
+
+# sqlite runtime files
+db/sqlite/*.sqlite
+db/sqlite/*.sqlite-wal
+db/sqlite/*.sqlite-shm
