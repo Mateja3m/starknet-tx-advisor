@@ -9,7 +9,7 @@
   ],
   "scripts": {
     "dev:web": "npm --workspace app run dev",
-    "dev:collector": "npm --workspace services/collector run dev",
+    "dev:collector": "npm run build -w packages/core && npm --workspace services/collector run dev",
     "dev": "concurrently \"npm run dev:collector\" \"npm run dev:web\"",
     "build": "npm run build -w packages/core && npm run build -w packages/sdk && npm run build -w services/collector && npm run build -w app",
     "test": "npm --workspace packages/core run test"
