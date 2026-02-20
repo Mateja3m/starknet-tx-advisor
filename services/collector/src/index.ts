@@ -1,4 +1,5 @@
 import express from 'express';
+import path from 'node:path';
 import { buildAnalysis } from './analysis.js';
 import { config } from './config.js';
 import { createDb } from './db.js';
@@ -27,7 +28,7 @@ function invalidTxHash(hash: string): boolean {
 }
 
 app.get('/health', (_req, res) => {
-  res.json({ ok: true, service: 'collector', sqlitePath: db.absolutePath });
+  res.json({ ok: true, service: 'collector', sqliteFile: path.basename(config.sqlitePath) });
 });
 
 app.get('/rpc/info', (_req, res) => {

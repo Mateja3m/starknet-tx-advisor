@@ -85,7 +85,6 @@ export function createDb(dbPathFromEnv: string) {
     upsertRequest,
     touchRequest,
     insertSnapshot,
-    getSnapshots,
-    absolutePath
+    getSnapshots
   };
 }
