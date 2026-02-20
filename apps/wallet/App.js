@@ -45,6 +45,8 @@ function buildApprovedResult(request) {
 export default function App() {
   const [incoming, setIncoming] = React.useState(null);
   const [lastResponseUrl, setLastResponseUrl] = React.useState('');
+  const [actionStatus, setActionStatus] = React.useState('IDLE');
+  const [lastError, setLastError] = React.useState('');
 
   const receive = React.useCallback((url) => {
     if (!url || !url.startsWith('smdak-wallet://')) {
@@ -68,6 +70,8 @@ export default function App() {
 
   const sendResponse = async (response) => {
     if (!incoming || !incoming.request || !incoming.request.callbackUrl) {
+      setLastError('Missing callbackUrl in incoming request');
+      setActionStatus('FAILED');
       return;
     }
 
@@ -78,13 +82,23 @@ export default function App() {
 
     setLastResponseUrl(callbackUrl);
     console.log('[smdak-wallet] callback', callbackUrl);
-    await Linking.openURL(callbackUrl);
+    try {
+      await Linking.openURL(callbackUrl);
+      setActionStatus('SENT');
+      setLastError('');
+    } catch (error) {
+      setLastError(String(error));
+      setActionStatus('FAILED');
+    }
   };
 
   const approve = async () => {
     if (!incoming || !incoming.request) {
+      setLastError('No incoming request to approve');
+      setActionStatus('FAILED');
       return;
     }
+    setActionStatus('APPROVING');
 
     const result = buildApprovedResult(incoming.request);
     if (!result) {
@@ -109,8 +123,11 @@ export default function App() {
 
   const reject = async () => {
     if (!incoming || !incoming.request) {
+      setLastError('No incoming request to reject');
+      setActionStatus('FAILED');
       return;
     }
+    setActionStatus('REJECTING');
 
     const response = buildWalletResponse({
       request: incoming.request,
@@ -134,6 +151,12 @@ export default function App() {
           <Text style={styles.k}>Route</Text>
           <Text style={styles.v}>{incoming?.route || '-'}</Text>
 
+          <Text style={styles.k}>Request ID</Text>
+          <Text style={styles.v}>{incoming?.request?.requestId || '-'}</Text>
+
+          <Text style={styles.k}>Callback URL</Text>
+          <Text style={styles.v}>{incoming?.request?.callbackUrl || '-'}</Text>
+
           <Text style={styles.k}>Decoded Payload</Text>
           <Text style={styles.v}>{incoming?.request ? JSON.stringify(incoming.request, null, 2) : '-'}</Text>
 
@@ -142,15 +165,21 @@ export default function App() {
         </View>
 
         <View style={styles.row}>
-          <Pressable onPress={approve} style={styles.approveBtn}>
+          <Pressable onPress={approve} style={({ pressed }) => [styles.approveBtn, pressed && styles.buttonPressed]}>
             <Text style={styles.btnText}>Approve</Text>
           </Pressable>
-          <Pressable onPress={reject} style={styles.rejectBtn}>
+          <Pressable onPress={reject} style={({ pressed }) => [styles.rejectBtn, pressed && styles.buttonPressed]}>
             <Text style={styles.btnText}>Reject</Text>
           </Pressable>
         </View>
 
         <View style={styles.card}>
+          <Text style={styles.k}>Action Status</Text>
+          <Text style={styles.v}>{actionStatus}</Text>
+
+          <Text style={styles.k}>Last Error</Text>
+          <Text style={styles.v}>{lastError || '-'}</Text>
+
           <Text style={styles.k}>Last Callback URL</Text>
           <Text style={styles.v}>{lastResponseUrl || '-'}</Text>
         </View>
@@ -185,6 +214,10 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     paddingVertical: 12,
     alignItems: 'center',
+  },
+  buttonPressed: {
+    opacity: 0.75,
+    transform: [{ scale: 0.98 }],
   },
   btnText: { color: '#fff', fontWeight: '700' },
 });

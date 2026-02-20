@@ -14,7 +14,7 @@ import { SmdakProvider, useWallet, useTransaction, useActivity } from '@smdak/ho
 
 function Tab({ active, label, onPress }) {
   return (
-    <Pressable onPress={onPress} style={[styles.tab, active && styles.tabActive]}>
+    <Pressable onPress={onPress} style={({ pressed }) => [styles.tab, active && styles.tabActive, pressed && styles.tabPressed]}>
       <Text style={styles.tabText}>{label}</Text>
     </Pressable>
   );
@@ -30,10 +30,10 @@ function HomeScreen() {
       <Text style={styles.v}>{status}</Text>
 
       <View style={styles.row}>
-        <Pressable style={styles.primaryBtn} onPress={connect}>
+        <Pressable style={({ pressed }) => [styles.primaryBtn, pressed && styles.buttonPressed]} onPress={connect}>
           <Text style={styles.btnText}>Connect</Text>
         </Pressable>
-        <Pressable style={styles.secondaryBtn} onPress={disconnect}>
+        <Pressable style={({ pressed }) => [styles.secondaryBtn, pressed && styles.buttonPressed]} onPress={disconnect}>
           <Text style={styles.btnText}>Disconnect</Text>
         </Pressable>
       </View>
@@ -94,10 +94,10 @@ function DefiScreen() {
       <TextInput style={styles.input} value={amount} onChangeText={setAmount} placeholder="amount" keyboardType="numeric" />
 
       <View style={styles.row}>
-        <Pressable style={styles.primaryBtn} onPress={getQuote}>
+        <Pressable style={({ pressed }) => [styles.primaryBtn, pressed && styles.buttonPressed]} onPress={getQuote}>
           <Text style={styles.btnText}>Get Quote</Text>
         </Pressable>
-        <Pressable style={styles.primaryBtn} onPress={executeSwap}>
+        <Pressable style={({ pressed }) => [styles.primaryBtn, pressed && styles.buttonPressed]} onPress={executeSwap}>
           <Text style={styles.btnText}>Execute Swap</Text>
         </Pressable>
       </View>
@@ -140,7 +140,7 @@ function NftScreen() {
         placeholder="collectionName"
       />
       <TextInput style={styles.input} value={receiver} onChangeText={setReceiver} placeholder="receiver" />
-      <Pressable style={styles.primaryBtn} onPress={mint}>
+      <Pressable style={({ pressed }) => [styles.primaryBtn, pressed && styles.buttonPressed]} onPress={mint}>
         <Text style={styles.btnText}>Mint NFT</Text>
       </Pressable>
 
@@ -159,7 +159,7 @@ function ActivityScreen() {
   return (
     <View style={styles.card}>
       <Text style={styles.h1}>Activity / Logs</Text>
-      <Pressable style={styles.secondaryBtn} onPress={clearLogs}>
+      <Pressable style={({ pressed }) => [styles.secondaryBtn, pressed && styles.buttonPressed]} onPress={clearLogs}>
         <Text style={styles.btnText}>Clear Logs</Text>
       </Pressable>
 
@@ -178,7 +178,7 @@ function SettingsScreen() {
   return (
     <View style={styles.card}>
       <Text style={styles.h1}>Settings</Text>
-      <Pressable style={styles.secondaryBtn} onPress={clearStorage}>
+      <Pressable style={({ pressed }) => [styles.secondaryBtn, pressed && styles.buttonPressed]} onPress={clearStorage}>
         <Text style={styles.btnText}>Clear Storage</Text>
       </Pressable>
     </View>
@@ -247,6 +247,7 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
   },
   tabActive: { backgroundColor: '#2f5be4' },
+  tabPressed: { opacity: 0.8 },
   tabText: { color: '#fff', fontWeight: '700' },
   card: {
     backgroundColor: '#131d35',
@@ -285,6 +286,10 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     paddingVertical: 11,
     alignItems: 'center',
+  },
+  buttonPressed: {
+    opacity: 0.8,
+    transform: [{ scale: 0.98 }],
   },
   btnText: { color: '#fff', fontWeight: '700' },
 });
