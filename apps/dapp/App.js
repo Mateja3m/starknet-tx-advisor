@@ -22,6 +22,8 @@ function Tab({ active, label, onPress }) {
 
 function HomeScreen() {
   const { status, session, connect, disconnect, error } = useWallet();
+  const canConnect = status !== 'CONNECTED' && status !== 'CONNECTING';
+  const canDisconnect = status === 'CONNECTED';
 
   return (
     <View style={styles.card}>
@@ -30,10 +32,26 @@ function HomeScreen() {
       <Text style={styles.v}>{status}</Text>
 
       <View style={styles.row}>
-        <Pressable style={({ pressed }) => [styles.primaryBtn, pressed && styles.buttonPressed]} onPress={connect}>
+        <Pressable
+          style={({ pressed }) => [
+            styles.primaryBtn,
+            !canConnect && styles.buttonDisabled,
+            pressed && canConnect && styles.buttonPressed,
+          ]}
+          onPress={connect}
+          disabled={!canConnect}
+        >
           <Text style={styles.btnText}>Connect</Text>
         </Pressable>
-        <Pressable style={({ pressed }) => [styles.secondaryBtn, pressed && styles.buttonPressed]} onPress={disconnect}>
+        <Pressable
+          style={({ pressed }) => [
+            styles.secondaryBtn,
+            !canDisconnect && styles.buttonDisabled,
+            pressed && canDisconnect && styles.buttonPressed,
+          ]}
+          onPress={disconnect}
+          disabled={!canDisconnect}
+        >
           <Text style={styles.btnText}>Disconnect</Text>
         </Pressable>
       </View>
@@ -52,10 +70,15 @@ function HomeScreen() {
 
 function DefiScreen() {
   const { sendTx, txState, error } = useTransaction();
+  const { status } = useWallet();
   const [fromToken, setFromToken] = React.useState('ETH');
   const [toToken, setToToken] = React.useState('STRK');
   const [amount, setAmount] = React.useState('1.0');
   const [quote, setQuote] = React.useState(null);
+  const amountNum = Number(amount || 0);
+  const txBusy = txState.status === 'REQUESTED' || txState.status === 'WALLET_APPROVED';
+  const canGetQuote = amountNum > 0 && Boolean(fromToken.trim()) && Boolean(toToken.trim());
+  const canExecute = Boolean(quote) && status === 'CONNECTED' && !txBusy;
 
   const getQuote = () => {
     const numericAmount = Number(amount || 0);
@@ -94,16 +117,33 @@ function DefiScreen() {
       <TextInput style={styles.input} value={amount} onChangeText={setAmount} placeholder="amount" keyboardType="numeric" />
 
       <View style={styles.row}>
-        <Pressable style={({ pressed }) => [styles.primaryBtn, pressed && styles.buttonPressed]} onPress={getQuote}>
+        <Pressable
+          style={({ pressed }) => [
+            styles.primaryBtn,
+            !canGetQuote && styles.buttonDisabled,
+            pressed && canGetQuote && styles.buttonPressed,
+          ]}
+          onPress={getQuote}
+          disabled={!canGetQuote}
+        >
           <Text style={styles.btnText}>Get Quote</Text>
         </Pressable>
-        <Pressable style={({ pressed }) => [styles.primaryBtn, pressed && styles.buttonPressed]} onPress={executeSwap}>
+        <Pressable
+          style={({ pressed }) => [
+            styles.primaryBtn,
+            !canExecute && styles.buttonDisabled,
+            pressed && canExecute && styles.buttonPressed,
+          ]}
+          onPress={executeSwap}
+          disabled={!canExecute}
+        >
           <Text style={styles.btnText}>Execute Swap</Text>
         </Pressable>
       </View>
 
       <Text style={styles.k}>Quote</Text>
       <Text style={styles.v}>{quote ? JSON.stringify(quote, null, 2) : '-'}</Text>
+      {status !== 'CONNECTED' && <Text style={styles.warn}>Connect wallet before executing swap.</Text>}
 
       <Text style={styles.k}>Lifecycle</Text>
       <Text style={styles.v}>CREATED - REQUESTED - WALLET_APPROVED - CONFIRMED</Text>
@@ -116,8 +156,11 @@ function DefiScreen() {
 
 function NftScreen() {
   const { sendTx, txState, error } = useTransaction();
+  const { status } = useWallet();
   const [collectionName, setCollectionName] = React.useState('SMDAK Collection');
   const [receiver, setReceiver] = React.useState('0xMOCK_RECEIVER');
+  const txBusy = txState.status === 'REQUESTED' || txState.status === 'WALLET_APPROVED';
+  const canMint = status === 'CONNECTED' && Boolean(collectionName.trim()) && Boolean(receiver.trim()) && !txBusy;
 
   const mint = () => {
     sendTx(
@@ -140,9 +183,18 @@ function NftScreen() {
         placeholder="collectionName"
       />
       <TextInput style={styles.input} value={receiver} onChangeText={setReceiver} placeholder="receiver" />
-      <Pressable style={({ pressed }) => [styles.primaryBtn, pressed && styles.buttonPressed]} onPress={mint}>
+      <Pressable
+        style={({ pressed }) => [
+          styles.primaryBtn,
+          !canMint && styles.buttonDisabled,
+          pressed && canMint && styles.buttonPressed,
+        ]}
+        onPress={mint}
+        disabled={!canMint}
+      >
         <Text style={styles.btnText}>Mint NFT</Text>
       </Pressable>
+      {status !== 'CONNECTED' && <Text style={styles.warn}>Connect wallet before minting.</Text>}
 
       <Text style={styles.k}>Lifecycle</Text>
       <Text style={styles.v}>CREATED - REQUESTED - WALLET_APPROVED - CONFIRMED</Text>
@@ -155,11 +207,20 @@ function NftScreen() {
 
 function ActivityScreen() {
   const { logs, history, clearLogs } = useActivity();
+  const hasActivity = logs.length > 0 || history.length > 0;
 
   return (
     <View style={styles.card}>
       <Text style={styles.h1}>Activity / Logs</Text>
-      <Pressable style={({ pressed }) => [styles.secondaryBtn, pressed && styles.buttonPressed]} onPress={clearLogs}>
+      <Pressable
+        style={({ pressed }) => [
+          styles.secondaryBtn,
+          !hasActivity && styles.buttonDisabled,
+          pressed && hasActivity && styles.buttonPressed,
+        ]}
+        onPress={clearLogs}
+        disabled={!hasActivity}
+      >
         <Text style={styles.btnText}>Clear Logs</Text>
       </Pressable>
 
@@ -257,6 +318,7 @@ const styles = StyleSheet.create({
   },
   h1: { color: '#fff', fontWeight: '700', fontSize: 19, marginBottom: 10 },
   k: { color: '#8ca1db', marginTop: 8 },
+  warn: { color: '#ffcc80', marginTop: 8, fontSize: 12 },
   v: { color: '#fff', marginTop: 4, fontFamily: 'monospace' },
   input: {
     borderWidth: 1,
@@ -290,6 +352,9 @@ const styles = StyleSheet.create({
   buttonPressed: {
     opacity: 0.8,
     transform: [{ scale: 0.98 }],
+  },
+  buttonDisabled: {
+    opacity: 0.45,
   },
   btnText: { color: '#fff', fontWeight: '700' },
 });
