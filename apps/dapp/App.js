@@ -7,6 +7,8 @@ import {
   TextInput,
   Pressable,
   StyleSheet,
+  Platform,
+  StatusBar as RNStatusBar,
 } from 'react-native';
 import { SmdakProvider, useWallet, useTransaction, useActivity } from '@smdak/hooks';
 
@@ -188,13 +190,18 @@ function Shell() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.tabs}>
+      <ScrollView
+        horizontal
+        style={styles.tabsScroll}
+        contentContainerStyle={styles.tabs}
+        showsHorizontalScrollIndicator={false}
+      >
         <Tab active={tab === 'home'} label="Home" onPress={() => setTab('home')} />
         <Tab active={tab === 'defi'} label="DeFi" onPress={() => setTab('defi')} />
         <Tab active={tab === 'nft'} label="NFT" onPress={() => setTab('nft')} />
         <Tab active={tab === 'logs'} label="Logs" onPress={() => setTab('logs')} />
         <Tab active={tab === 'settings'} label="Settings" onPress={() => setTab('settings')} />
-      </View>
+      </ScrollView>
 
       <ScrollView contentContainerStyle={styles.scroll}>
         {tab === 'home' && <HomeScreen />}
@@ -216,14 +223,22 @@ export default function App() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#0f1526' },
+  container: {
+    flex: 1,
+    backgroundColor: '#0f1526',
+    paddingTop: Platform.OS === 'android' ? (RNStatusBar.currentHeight || 0) + 6 : 0,
+  },
   scroll: { padding: 12 },
+  tabsScroll: {
+    maxHeight: 58,
+  },
   tabs: {
     flexDirection: 'row',
     gap: 6,
-    flexWrap: 'wrap',
     paddingHorizontal: 10,
-    paddingTop: 10,
+    paddingTop: 8,
+    paddingBottom: 4,
+    alignItems: 'center',
   },
   tab: {
     backgroundColor: '#1f2a45',
