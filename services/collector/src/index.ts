@@ -67,10 +67,6 @@ app.post('/watch', async (req, res) => {
     });
     return;
   }
-  if (classHashRes.error.code === 'RPC_UNAVAILABLE') {
-    res.status(503).json({ error: classHashRes.error });
-    return;
-  }
 
   watchers.start(txHash);
   res.json({ ok: true, txHash });
