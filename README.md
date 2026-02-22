@@ -9,10 +9,13 @@ Ultra-lean PoC for Starknet transaction lifecycle and fee-escalation advice base
 
 ## Environment setup
 
-1. Copy root env file:
+1. Create local root `.env` file (not committed):
 
 ```bash
-cp .env.example .env
+cat > .env <<'EOF'
+STARKNET_NETWORK=mainnet
+NEXT_PUBLIC_COLLECTOR_URL=http://localhost:4000
+EOF
 ```
 
 2. Pick network with a single variable:
@@ -112,6 +115,12 @@ SEPOLIA_TX_HASH=<PUT_A_REAL_TX_HASH_PLACEHOLDER>
 ```
 
 Public transaction hashes can be copied from Voyager or StarkScan.
+
+## Env Safety
+
+- Never commit `.env` files with real values.
+- If a real key was ever committed, rotate it immediately in the provider dashboard.
+- Current `.gitignore` blocks env files in all folders.
 
 ## Known limitations
 
