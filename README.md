@@ -15,17 +15,14 @@ Ultra-lean PoC for Starknet transaction lifecycle and fee-escalation advice base
 cp .env.example .env
 ```
 
-Or use prebuilt profiles:
+2. Pick network with a single variable:
+- `STARKNET_NETWORK=mainnet` or `STARKNET_NETWORK=sepolia`
+- That's enough for default behavior (the app has built-in public RPC fallbacks for both networks).
+- No wallet is required.
 
-```bash
-npm run env:mainnet   # writes .env for mainnet
-npm run env:sepolia   # writes .env for sepolia
-```
-
-2. Configure RPC URLs (supports fallback lists for both networks):
-- `NEXT_PUBLIC_STARKNET_RPC_URLS_MAINNET` (comma-separated)
-- `NEXT_PUBLIC_STARKNET_RPC_URLS_SEPOLIA` (comma-separated)
-- `STARKNET_NETWORK` (`mainnet` or `sepolia`)
+3. Optional (only if you want custom providers): set comma-separated RPC URL lists
+- `NEXT_PUBLIC_STARKNET_RPC_URLS_MAINNET`
+- `NEXT_PUBLIC_STARKNET_RPC_URLS_SEPOLIA`
 
 Resolution order:
 1. `NEXT_PUBLIC_STARKNET_RPC_URLS_<NETWORK>`
@@ -33,16 +30,12 @@ Resolution order:
 3. Provider URLs built from `INFURA_API_KEY` / `ALCHEMY_API_KEY`
 4. Built-in public fallback endpoints
 
-Example:
+Minimal example:
 
 ```env
 STARKNET_NETWORK=sepolia
-NEXT_PUBLIC_STARKNET_RPC_URLS_MAINNET=https://starknet-mainnet.public.blastapi.io/rpc/v0_7,https://starknet-mainnet.g.alchemy.com/starknet/version/rpc/v0_7/docs-demo
-NEXT_PUBLIC_STARKNET_RPC_URLS_SEPOLIA=https://starknet-sepolia.public.blastapi.io/rpc/v0_7,https://starknet-sepolia.g.alchemy.com/starknet/version/rpc/v0_7/docs-demo
 NEXT_PUBLIC_COLLECTOR_URL=http://localhost:4000
 ```
-
-No wallet is required.
 
 ## Install
 
@@ -56,14 +49,21 @@ npm install
 npm run dev
 ```
 
-Network switch flow (easy toggle):
-1. `npm run env:mainnet` or `npm run env:sepolia`
+Network switch flow (single env variable):
+1. edit `.env` and set `STARKNET_NETWORK=mainnet` or `STARKNET_NETWORK=sepolia`
 2. restart dev servers (`Ctrl+C`, then `npm run dev`)
 3. verify backend network:
 
 ```bash
 curl http://localhost:4000/rpc/info
 ```
+
+Quick switch command (macOS/Linux):
+
+```bash
+sed -i '' 's/^STARKNET_NETWORK=.*/STARKNET_NETWORK=mainnet/' .env
+# or
+sed -i '' 's/^STARKNET_NETWORK=.*/STARKNET_NETWORK=sepolia/' .env```
 
 Or separately:
 

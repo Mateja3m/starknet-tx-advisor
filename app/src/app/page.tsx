@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 type TxResponse = {
   txHash: string;
@@ -27,6 +27,10 @@ type TxResponse = {
   report: { exportJson: unknown };
 };
 
+type RpcInfoResponse = {
+  network?: string;
+};
+
 const baseUrl = process.env.NEXT_PUBLIC_COLLECTOR_URL || 'http://localhost:4000';
 
 function isHexLike(value: string): boolean {
@@ -48,6 +52,26 @@ export default function HomePage() {
   const [error, setError] = useState('');
   const [data, setData] = useState<TxResponse | null>(null);
   const [showRaw, setShowRaw] = useState(false);
+  const [network, setNetwork] = useState('...');
+
+  useEffect(() => {
+    let cancelled = false;
+    void (async () => {
+      try {
+        const res = await fetch(`${baseUrl}/rpc/info`);
+        if (!res.ok) return;
+        const json = (await res.json()) as RpcInfoResponse;
+        if (!cancelled && json.network) {
+          setNetwork(json.network);
+        }
+      } catch {
+        // ignore, network indicator is best-effort only
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const statusClass = useMemo(() => {
     const s = data?.currentStatus || '';
@@ -118,6 +142,7 @@ export default function HomePage() {
     <main className="container">
       <h1>Starknet Transaction Lifecycle & Fee Escalation Advisor (STLFA)</h1>
       <p>Enter a tx hash to inspect lifecycle snapshots and deterministic fee escalation advice.</p>
+      <p><strong>Active network:</strong> {network}</p>
 
       <section className="card">
         <div className="row">
