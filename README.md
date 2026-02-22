@@ -1,4 +1,4 @@
-# starknet-tx-advisor
+# Starknet Transaction Lifecycle & Fee Escalation Advisor (STLFA)
 
 Ultra-lean PoC for Starknet transaction lifecycle and fee-escalation advice based on `tx_hash` analysis only.
 

@@ -96,7 +96,7 @@ export default function HomePage() {
 
   return (
     <main className="container">
-      <h1>Starknet Tx Advisor</h1>
+      <h1>Starknet Transaction Lifecycle & Fee Escalation Advisor (STLFA)</h1>
       <p>Enter a tx hash to inspect lifecycle snapshots and deterministic fee escalation advice.</p>
 
       <section className="card">
