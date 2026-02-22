@@ -3,6 +3,7 @@ import path from 'node:path';
 import { buildAnalysis } from './analysis.js';
 import { config } from './config.js';
 import { createDb } from './db.js';
+import { inspectRpcUrls } from './lib/rpc.js';
 import { StarknetRpcClient } from './rpc.js';
 import { createWatcherService } from './watcher.js';
 
@@ -37,6 +38,15 @@ app.get('/rpc/info', (_req, res) => {
     network: config.network,
     configuredRpcUrls: config.rpcUrls.length,
     fallbacksConfigured: Boolean(config.rpcUrls[1] || config.rpcUrls[2])
+  });
+});
+
+app.get('/rpc/check', async (_req, res) => {
+  const checks = await inspectRpcUrls(config.rpcUrls);
+  res.json({
+    network: config.network,
+    configuredRpcUrls: config.rpcUrls.length,
+    checks
   });
 });
 

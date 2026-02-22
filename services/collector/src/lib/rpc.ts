@@ -2,11 +2,15 @@ export type StarknetNetwork = 'mainnet' | 'sepolia';
 
 const DEFAULT_RPC_URLS: Record<StarknetNetwork, string[]> = {
   mainnet: [
+    'https://starknet-mainnet.public.blastapi.io/rpc/v0_8',
     'https://starknet-mainnet.public.blastapi.io/rpc/v0_7',
+    'https://starknet-mainnet.g.alchemy.com/starknet/version/rpc/v0_8/docs-demo',
     'https://starknet-mainnet.g.alchemy.com/starknet/version/rpc/v0_7/docs-demo'
   ],
   sepolia: [
+    'https://starknet-sepolia.public.blastapi.io/rpc/v0_8',
     'https://starknet-sepolia.public.blastapi.io/rpc/v0_7',
+    'https://starknet-sepolia.g.alchemy.com/starknet/version/rpc/v0_8/docs-demo',
     'https://starknet-sepolia.g.alchemy.com/starknet/version/rpc/v0_7/docs-demo'
   ]
 };
@@ -28,7 +32,7 @@ function infuraUrl(network: StarknetNetwork, apiKey: string): string {
 }
 
 function alchemyUrl(network: StarknetNetwork, apiKey: string): string {
-  return `https://starknet-${network}.g.alchemy.com/starknet/version/rpc/v0_7/${apiKey}`;
+  return `https://starknet-${network}.g.alchemy.com/starknet/version/rpc/v0_8/${apiKey}`;
 }
 
 export function getRpcUrls(network: StarknetNetwork): string[] {
@@ -81,6 +85,19 @@ async function checkRpcUrl(rpcUrl: string): Promise<{ ok: true; chainId: string 
   } catch (error) {
     return { ok: false, error: String(error) };
   }
+}
+
+export async function inspectRpcUrls(urls: string[]): Promise<Array<{ url: string; ok: boolean; chainId?: string; error?: string }>> {
+  const out: Array<{ url: string; ok: boolean; chainId?: string; error?: string }> = [];
+  for (const url of urls) {
+    const result = await checkRpcUrl(url);
+    if (result.ok) {
+      out.push({ url, ok: true, chainId: result.chainId });
+    } else {
+      out.push({ url, ok: false, error: result.error });
+    }
+  }
+  return out;
 }
 
 export async function pickHealthyRpc(network: StarknetNetwork): Promise<{ rpcUrl: string; chainId: string } | null> {

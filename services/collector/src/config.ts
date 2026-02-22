@@ -1,8 +1,17 @@
+import fs from 'node:fs';
 import path from 'node:path';
 import dotenv from 'dotenv';
 import { getRpcUrls, type StarknetNetwork } from './lib/rpc.js';
 
-dotenv.config({ path: path.resolve(process.cwd(), '.env') });
+const envCandidates = [
+  path.resolve(process.cwd(), '.env'),
+  path.resolve(process.cwd(), '../.env'),
+  path.resolve(process.cwd(), '../../.env')
+];
+const envPath = envCandidates.find((p) => fs.existsSync(p));
+if (envPath) {
+  dotenv.config({ path: envPath });
+}
 
 const network: StarknetNetwork = process.env.STARKNET_NETWORK === 'mainnet' ? 'mainnet' : 'sepolia';
 

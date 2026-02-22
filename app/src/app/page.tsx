@@ -54,6 +54,19 @@ export default function HomePage() {
   const [showRaw, setShowRaw] = useState(false);
   const [network, setNetwork] = useState('...');
 
+  async function refreshNetworkInfo() {
+    try {
+      const res = await fetch(`${baseUrl}/rpc/info`);
+      if (!res.ok) return;
+      const json = (await res.json()) as RpcInfoResponse;
+      if (json.network) {
+        setNetwork(json.network);
+      }
+    } catch {
+      // ignore, network indicator is best-effort only
+    }
+  }
+
   useEffect(() => {
     let cancelled = false;
     void (async () => {
@@ -87,6 +100,7 @@ export default function HomePage() {
     setData(null);
 
     try {
+      await refreshNetworkInfo();
       if (!input || !isHexLike(input)) {
         throw new Error('Please enter a transaction hash (0x...)');
       }
