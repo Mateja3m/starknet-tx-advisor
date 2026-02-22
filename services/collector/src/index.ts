@@ -20,7 +20,7 @@ app.use((_req, res, next) => {
 });
 
 const db = createDb(config.sqlitePath);
-const rpc = new StarknetRpcClient(config.rpcUrls);
+const rpc = new StarknetRpcClient(config.rpcUrls, config.network);
 const watchers = createWatcherService({ db, rpc, pollIntervalMs: config.pollIntervalMs });
 
 function invalidTxHash(hash: string): boolean {
@@ -35,14 +35,30 @@ app.get('/rpc/info', (_req, res) => {
   res.json({
     activeRpcUrl: rpc.getActiveRpcUrl() || config.rpcUrls[0] || null,
     network: config.network,
+    configuredRpcUrls: config.rpcUrls.length,
     fallbacksConfigured: Boolean(config.rpcUrls[1] || config.rpcUrls[2])
   });
 });
 
-app.post('/watch', (req, res) => {
+app.post('/watch', async (req, res) => {
   const txHash = String(req.body?.txHash || '');
   if (invalidTxHash(txHash)) {
     res.status(400).json({ error: { code: 'INVALID_TX_HASH', message: 'txHash must be 0x-prefixed hex string.' } });
+    return;
+  }
+
+  const classHashRes = await rpc.postJsonRpc<unknown>('starknet_getClassHashAt', ['latest', txHash]);
+  if (classHashRes.ok) {
+    res.status(400).json({
+      error: {
+        code: 'INVALID_TX_HASH',
+        message: 'Please enter a transaction hash (0x...), not an account or contract address.'
+      }
+    });
+    return;
+  }
+  if (classHashRes.error.code === 'RPC_UNAVAILABLE') {
+    res.status(503).json({ error: classHashRes.error });
     return;
   }
 

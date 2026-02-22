@@ -1,5 +1,6 @@
 import { setTimeout as delay } from 'node:timers/promises';
 import type { RpcCallFailure, RpcCallResult } from './types.js';
+import { pickHealthyRpc, type StarknetNetwork } from './lib/rpc.js';
 
 type JsonRpcSuccess<T> = { jsonrpc: '2.0'; id: number; result: T };
 type JsonRpcErr = { jsonrpc: '2.0'; id: number; error: { code: number; message: string; data?: unknown } };
@@ -7,11 +8,24 @@ type JsonRpcErr = { jsonrpc: '2.0'; id: number; error: { code: number; message: 
 export class StarknetRpcClient {
   private id = 0;
   private activeRpcUrl = '';
+  private healthCheckDone = false;
 
-  constructor(private rpcUrls: string[]) {}
+  constructor(
+    private rpcUrls: string[],
+    private network: StarknetNetwork
+  ) {}
 
   getActiveRpcUrl(): string {
     return this.activeRpcUrl;
+  }
+
+  private async ensureHealthyOrder() {
+    if (this.healthCheckDone || !this.rpcUrls.length) return;
+    this.healthCheckDone = true;
+    const healthy = await pickHealthyRpc(this.network);
+    if (!healthy) return;
+    this.activeRpcUrl = healthy.rpcUrl;
+    this.rpcUrls = [healthy.rpcUrl, ...this.rpcUrls.filter((u) => u !== healthy.rpcUrl)];
   }
 
   private async callSingleUrl<T>(rpcUrl: string, method: string, params: unknown[]): Promise<RpcCallResult<T> | RpcCallFailure> {
@@ -75,8 +89,16 @@ export class StarknetRpcClient {
   }
 
   async postJsonRpc<T>(method: string, params: unknown[]): Promise<RpcCallResult<T> | RpcCallFailure> {
+    await this.ensureHealthyOrder();
+
     if (!this.rpcUrls.length) {
-      return { ok: false, error: { code: 'RPC_UNAVAILABLE', message: 'No RPC URLs configured.' } };
+      return {
+        ok: false,
+        error: {
+          code: 'RPC_UNAVAILABLE',
+          message: `No RPC URLs configured for network "${this.network}". Set NEXT_PUBLIC_STARKNET_RPC_URLS_${this.network.toUpperCase()}.`
+        }
+      };
     }
 
     let lastFailure: RpcCallFailure = { ok: false, error: { code: 'RPC_UNAVAILABLE', message: 'RPC call failed' } };
@@ -89,6 +111,13 @@ export class StarknetRpcClient {
       lastFailure = result;
     }
 
-    return lastFailure;
+    return {
+      ok: false,
+      error: {
+        code: 'RPC_UNAVAILABLE',
+        message: `All configured RPC URLs failed for "${this.network}".`,
+        debug: { urls: this.rpcUrls, lastFailure: lastFailure.error }
+      }
+    };
   }
 }

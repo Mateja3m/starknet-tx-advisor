@@ -22,6 +22,17 @@ export function createWatcherService(input: {
   async function pollOnce(txHash: string) {
     const now = Date.now();
 
+    const txRes = await rpc.postJsonRpc<unknown>('starknet_getTransactionByHash', [txHash]);
+    if (txRes.ok) {
+      db.insertSnapshot({
+        txHash,
+        ts: now,
+        kind: 'status',
+        normalized: normalizeStatus(txRes.data),
+        raw: { ...(txRes.data as object), __method: 'starknet_getTransactionByHash', __rpcUrl: txRes.rpcUrl }
+      });
+    }
+
     const statusRes = await rpc.postJsonRpc<unknown>('starknet_getTransactionStatus', [txHash]);
     if (statusRes.ok) {
       const normalized = normalizeStatus(statusRes.data);

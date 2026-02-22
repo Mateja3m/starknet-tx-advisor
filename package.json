@@ -11,8 +11,11 @@
     "dev:web": "npm --workspace app run dev",
     "dev:collector": "npm run build -w packages/core && npm --workspace services/collector run dev",
     "dev": "concurrently \"npm run dev:collector\" \"npm run dev:web\"",
+    "env:mainnet": "cp .env.mainnet.example .env",
+    "env:sepolia": "cp .env.sepolia.example .env",
     "build": "npm run build -w packages/core && npm run build -w packages/sdk && npm run build -w services/collector && npm run build -w app",
-    "test": "npm --workspace packages/core run test"
+    "test": "npm --workspace packages/core run test",
+    "test:rpc": "node scripts/test-rpc.mjs"
   },
   "devDependencies": {
     "@types/better-sqlite3": "^7.6.13",

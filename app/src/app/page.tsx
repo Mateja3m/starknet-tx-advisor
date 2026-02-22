@@ -29,6 +29,19 @@ type TxResponse = {
 
 const baseUrl = process.env.NEXT_PUBLIC_COLLECTOR_URL || 'http://localhost:4000';
 
+function isHexLike(value: string): boolean {
+  return /^0x[0-9a-fA-F]+$/.test(value);
+}
+
+function parseApiError(text: string): string {
+  try {
+    const json = JSON.parse(text) as { error?: { message?: string } };
+    return json.error?.message || text;
+  } catch {
+    return text;
+  }
+}
+
 export default function HomePage() {
   const [txHash, setTxHash] = useState('');
   const [loading, setLoading] = useState(false);
@@ -44,34 +57,41 @@ export default function HomePage() {
   }, [data?.currentStatus]);
 
   async function analyze() {
+    const input = txHash.trim();
     setError('');
     setLoading(true);
     setData(null);
 
     try {
+      if (!input || !isHexLike(input)) {
+        throw new Error('Please enter a transaction hash (0x...)');
+      }
+      if (input.length < 10) {
+        throw new Error('Please enter a full transaction hash (0x...).');
+      }
+
       const watchRes = await fetch(`${baseUrl}/watch`, {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ txHash })
+        body: JSON.stringify({ txHash: input })
       });
 
       if (!watchRes.ok) {
-        const text = await watchRes.text();
-        throw new Error(text || 'Failed to start watch.');
+        throw new Error(parseApiError(await watchRes.text()) || 'Failed to start watch.');
       }
 
       await new Promise((resolve) => setTimeout(resolve, 1200));
 
       let lastError = 'Analysis fetch failed.';
       for (let i = 0; i < 4; i += 1) {
-        const txRes = await fetch(`${baseUrl}/tx/${txHash}?includeRaw=1`);
+        const txRes = await fetch(`${baseUrl}/tx/${input}?includeRaw=1`);
         if (txRes.ok) {
           const json = (await txRes.json()) as TxResponse;
           setData(json);
           return;
         }
 
-        lastError = await txRes.text();
+        lastError = parseApiError(await txRes.text());
         await new Promise((resolve) => setTimeout(resolve, 900));
       }
 
